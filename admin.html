@@ -1,0 +1,2321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
+    <title>Brick Lane · Admin</title>
+    <!-- Font & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link rel="icon" type="image/png" sizes="32x32" href="gallery2/logo.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="gallery2/logo.png" />
+    <link rel="apple-touch-icon" href="gallery2/logo.png" />
+    <!-- html2pdf -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1a5cff',
+                        primaryLight: '#e8edff',
+                        primaryDark: '#0d3bb8',
+                        slateLight: '#f8faff',
+                        slateMuted: '#eef2f8',
+                        ink: '#0b1a2e',
+                        grayText: '#4b5a6e',
+                        borderLight: '#dce3ed',
+                        white: '#ffffff',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #f4f7fd;
+            font-family: 'Inter', sans-serif;
+        }
+        /* ------ sidebar ------ */
+        .sidebar {
+            background: white;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.02);
+            border-right: 1px solid #e6edf5;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 260px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 50;
+            overflow-y: auto;
+            padding: 1.5rem 1rem;
+            transform: translateX(0);
+        }
+        .sidebar.closed {
+            transform: translateX(-100%);
+        }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.7rem 1rem;
+            border-radius: 12px;
+            color: #2e405b;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.15s ease;
+            margin-bottom: 2px;
+            border: 1px solid transparent;
+        }
+        .sidebar-link i {
+            width: 22px;
+            font-size: 1.1rem;
+            color: #5b6f8c;
+            transition: 0.15s;
+        }
+        .sidebar-link:hover {
+            background: #f0f5ff;
+            color: #1a5cff;
+            border-color: #d6e4ff;
+        }
+        .sidebar-link:hover i {
+            color: #1a5cff;
+        }
+        .sidebar-link.active {
+            background: #e8edff;
+            color: #1a5cff;
+            border-color: #b8ceff;
+            font-weight: 600;
+        }
+        .sidebar-link.active i {
+            color: #1a5cff;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 1.8rem 2rem 3rem;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+        /* mobile nav */
+        .mobile-nav {
+            display: none;
+            background: white;
+            padding: 0.8rem 1rem;
+            border-bottom: 1px solid #eef2f8;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.92);
+        }
+        .mobile-nav .brand {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1a5cff;
+        }
+        .mobile-nav .brand span {
+            font-weight: 300;
+        }
+        .mobile-nav .menu-toggle {
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            color: #0b1a2e;
+            padding: 0 0.2rem;
+            cursor: pointer;
+        }
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(11, 26, 46, 0.3);
+            backdrop-filter: blur(2px);
+            z-index: 45;
+        }
+        .mobile-overlay.active {
+            display: block;
+        }
+
+        /* cards etc */
+        .card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #e6edf5;
+            box-shadow: 0 4px 12px rgba(0, 20, 50, 0.02);
+            transition: 0.15s ease;
+        }
+        .card-header {
+            border-bottom: 1px solid #eef2f8;
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            color: #0b1a2e;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 1.25rem 1.5rem;
+            border: 1px solid #e6edf5;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.01);
+            transition: 0.15s ease;
+        }
+        .stat-card:hover {
+            border-color: #b8ceff;
+            box-shadow: 0 6px 16px rgba(26, 92, 255, 0.04);
+        }
+        .badge-status {
+            background: #e6f0ff;
+            color: #1a5cff;
+            padding: 0.2rem 0.9rem;
+            border-radius: 100px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+        .btn-outline-primary {
+            border: 1px solid #d6e4ff;
+            color: #1a5cff;
+            background: transparent;
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            font-weight: 500;
+            font-size: 0.8rem;
+            transition: 0.1s ease;
+        }
+        .btn-outline-primary:hover {
+            background: #e8edff;
+            border-color: #1a5cff;
+        }
+        .btn-primary {
+            background: #1a5cff;
+            color: white;
+            padding: 0.45rem 1.4rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: none;
+            transition: 0.15s ease;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            background: #0d3bb8;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-weight: 500;
+            color: #4b5a6e;
+            border-radius: 40px;
+            transition: 0.1s ease;
+            font-size: 0.9rem;
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+        .tab-btn.active {
+            background: white;
+            color: #1a5cff;
+            border-color: #d6e4ff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+        .tab-btn:hover {
+            background: #f4f9ff;
+            color: #1a5cff;
+        }
+        .modal-overlay {
+            background: rgba(11, 26, 46, 0.3);
+            backdrop-filter: blur(4px);
+        }
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: 2px solid #1a5cff;
+            outline-offset: 1px;
+        }
+        .scroll-thin::-webkit-scrollbar {
+            width: 5px;
+        }
+        .scroll-thin::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 6px;
+        }
+
+        /* responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+                padding: 1.2rem 1rem;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1rem 1rem 3rem;
+            }
+            .mobile-nav {
+                display: flex;
+            }
+            .stat-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .tab-btn {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+            .card-header {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            .orders-table th,
+            .orders-table td {
+                font-size: 0.7rem;
+                padding: 0.5rem 0.3rem;
+            }
+            .order-stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.5rem;
+            }
+            .order-stat-item .stat-number {
+                font-size: 1rem;
+            }
+            .booking-popup {
+                padding: 1.2rem;
+            }
+            .login-box {
+                padding: 1.8rem 1.2rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .stat-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.6rem;
+            }
+            .stat-card {
+                padding: 0.8rem 1rem;
+            }
+            .stat-card .text-2xl {
+                font-size: 1.3rem;
+            }
+            .order-stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .tab-btn {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.6rem;
+            }
+            .main-content {
+                padding: 0.6rem 0.6rem 2rem;
+            }
+            .card-header {
+                padding: 0.7rem 0.8rem;
+                font-size: 0.9rem;
+            }
+            .card .p-4 {
+                padding: 0.8rem;
+            }
+            .booking-actions-wrap .action-icon {
+                font-size: 0.55rem;
+                padding: 0.1rem 0.4rem;
+            }
+        }
+
+        /* login */
+        #loginOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(11, 26, 46, 0.5);
+            backdrop-filter: blur(8px);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #loginOverlay.hidden {
+            display: none;
+        }
+        .login-box {
+            background: white;
+            border-radius: 40px;
+            padding: 2.5rem 2rem;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .login-box input {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            border-radius: 60px;
+            border: 1px solid #dce3ed;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+        .login-box input:focus {
+            border-color: #1a5cff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 92, 255, 0.15);
+        }
+        .login-box .btn-primary {
+            width: 100%;
+            padding: 0.9rem;
+            font-size: 1rem;
+        }
+        .login-box .error {
+            color: #dc3c4c;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            min-height: 1.5rem;
+        }
+        .pulse-dot {
+            animation: pulse 1.8s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.4;
+                transform: scale(0.7);
+            }
+        }
+
+        /* booking badges etc */
+        .booking-note-badge {
+            display: inline-block;
+            background: #e6f0ff;
+            color: #1a5cff;
+            padding: 0.15rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            margin-left: 4px;
+            max-width: 90px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+        }
+        .booking-note-badge.has-note {
+            background: #fef3c7;
+            color: #b45309;
+        }
+        .booking-actions-wrap {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .booking-actions-wrap .action-icon {
+            background: transparent;
+            border: 1px solid #dce3ed;
+            border-radius: 30px;
+            padding: 0.1rem 0.5rem;
+            font-size: 0.65rem;
+            color: #2e405b;
+            transition: 0.1s;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .booking-actions-wrap .action-icon:hover {
+            background: #f0f5ff;
+            border-color: #b8ceff;
+            color: #1a5cff;
+        }
+        .booking-actions-wrap .action-icon.confirm {
+            background: #d1fae5;
+            border-color: #6ee7b7;
+            color: #065f46;
+        }
+        .booking-actions-wrap .action-icon.confirm:hover {
+            background: #a7f3d0;
+        }
+        .booking-actions-wrap .action-icon.decline {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+        .booking-actions-wrap .action-icon.decline:hover {
+            background: #fecaca;
+        }
+        .booking-actions-wrap .action-icon.complete {
+            background: #dbeafe;
+            border-color: #93c5fd;
+            color: #1e40af;
+        }
+        .booking-actions-wrap .action-icon.complete:hover {
+            background: #bfdbfe;
+        }
+
+        .booking-popup-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(11, 26, 46, 0.5);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .booking-popup-overlay.active {
+            display: flex;
+        }
+        .booking-popup {
+            background: white;
+            border-radius: 28px;
+            max-width: 560px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem 2rem 1.8rem;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+            border: 1px solid #eef2f8;
+        }
+        .booking-popup .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 2px solid #eef2f8;
+        }
+        .booking-popup .popup-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #0b1a2e;
+        }
+        .booking-popup .popup-header h3 i {
+            color: #1a5cff;
+            margin-right: 8px;
+        }
+        .booking-popup .popup-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #8b9bb5;
+            cursor: pointer;
+            transition: 0.2s;
+            padding: 0 4px;
+        }
+        .booking-popup .popup-close:hover {
+            color: #dc3c4c;
+        }
+        .booking-popup .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid #f0f4fa;
+            font-size: 0.95rem;
+        }
+        .booking-popup .detail-row .label {
+            color: #6b7f96;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+        .booking-popup .detail-row .value {
+            color: #0b1a2e;
+            font-weight: 500;
+            text-align: right;
+            word-break: break-word;
+            max-width: 65%;
+        }
+        .booking-popup .popup-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            border-top: 1px solid #eef2f8;
+            padding-top: 1.2rem;
+        }
+        .booking-popup .popup-actions button {
+            flex: 1;
+            min-width: 80px;
+            padding: 0.6rem 0.8rem;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .booking-popup .popup-actions .btn-confirm {
+            background: #20b06b;
+            color: white;
+        }
+        .booking-popup .popup-actions .btn-confirm:hover {
+            background: #169c5c;
+        }
+        .booking-popup .popup-actions .btn-decline {
+            background: #dc3c4c;
+            color: white;
+        }
+        .booking-popup .popup-actions .btn-decline:hover {
+            background: #c02e3e;
+        }
+        .booking-popup .popup-actions .btn-invoice {
+            background: #1a5cff;
+            color: white;
+        }
+        .booking-popup .popup-actions .btn-invoice:hover {
+            background: #0d3bb8;
+        }
+        .booking-popup .popup-actions .btn-close-popup {
+            background: #eef2f8;
+            color: #2e405b;
+        }
+        .booking-popup .popup-actions .btn-close-popup:hover {
+            background: #dce3ed;
+        }
+        .booking-popup .popup-actions .btn-complete {
+            background: #6b7f96;
+            color: white;
+        }
+        .booking-popup .popup-actions .btn-complete:hover {
+            background: #4b5a6e;
+        }
+
+        .booking-popup .status-badge-popup {
+            display: inline-block;
+            padding: 0.2rem 0.9rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .booking-popup .status-badge-popup.pending {
+            background: #fef3c7;
+            color: #b45309;
+        }
+        .booking-popup .status-badge-popup.confirmed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .booking-popup .status-badge-popup.declined {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .booking-popup .status-badge-popup.complete {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .menu-item-card {
+            transition: all 0.2s ease;
+        }
+        .menu-item-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.04);
+        }
+
+        /* orders table */
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .orders-table th {
+            text-align: left;
+            padding: 0.75rem 0.75rem 0.75rem 0;
+            font-weight: 600;
+            color: #4b5a6e;
+            border-bottom: 1px solid #e6edf5;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .orders-table td {
+            padding: 0.8rem 0.75rem 0.8rem 0;
+            border-bottom: 1px solid #f0f4fa;
+            vertical-align: middle;
+        }
+        .orders-table .order-id {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #1a5cff;
+            font-weight: 600;
+        }
+        .orders-table .badge-status-pending {
+            background: #fef3c7;
+            color: #b45309;
+            padding: 0.15rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .orders-table .badge-status-accepted {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 0.15rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .orders-table .badge-status-declined {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 0.15rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .orders-table .badge-status-preparing {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 0.15rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .orders-table .badge-status-ready {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 0.15rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .order-action-btn {
+            background: transparent;
+            border: 1px solid #dce3ed;
+            border-radius: 30px;
+            padding: 0.1rem 0.7rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #2e405b;
+            transition: 0.1s;
+            cursor: pointer;
+            margin-right: 3px;
+        }
+        .order-action-btn.accept {
+            background: #d1fae5;
+            border-color: #6ee7b7;
+            color: #065f46;
+        }
+        .order-action-btn.accept:hover {
+            background: #a7f3d0;
+        }
+        .order-action-btn.decline {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+        .order-action-btn.decline:hover {
+            background: #fecaca;
+        }
+        .order-action-btn.view {
+            background: #eef2f8;
+            border-color: #dce3ed;
+        }
+        .order-action-btn.view:hover {
+            background: #dce3ed;
+        }
+        .order-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .order-stat-item {
+            background: #f8faff;
+            border-radius: 14px;
+            padding: 0.6rem 1rem;
+            border: 1px solid #eef2f8;
+            text-align: center;
+        }
+        .order-stat-item .stat-number {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0b1a2e;
+        }
+        .order-stat-item .stat-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: #6b7f96;
+            letter-spacing: 0.04em;
+        }
+        .order-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .order-filters select,
+        .order-filters input {
+            border: 1px solid #dce3ed;
+            border-radius: 40px;
+            padding: 0.3rem 1rem;
+            font-size: 0.8rem;
+            background: white;
+        }
+        .order-filters .filter-label {
+            font-size: 0.7rem;
+            color: #6b7f96;
+            font-weight: 500;
+        }
+
+        /* invoice */
+        .invoice-item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #eef2f8;
+            font-size: 13px;
+        }
+        .invoice-total-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            padding-top: 8px;
+            border-top: 2px solid #dce3ed;
+            margin-top: 4px;
+            font-size: 15px;
+        }
+        .invoice-service-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 13px;
+            color: #6b7f96;
+        }
+        .invoice-grand-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 800;
+            font-size: 18px;
+            padding-top: 8px;
+            border-top: 2px solid #1a5cff;
+            margin-top: 4px;
+            color: #1a5cff;
+        }
+
+        /* discount */
+        .discount-campaign-row .status-badge {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.7rem;
+            border-radius: 30px;
+            font-weight: 600;
+        }
+        .discount-campaign-row .status-badge.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .discount-campaign-row .status-badge.inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .discount-campaign-row .status-badge.expired {
+            background: #fef3c7;
+            color: #b45309;
+        }
+        .countdown-number {
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== LOGIN OVERLAY ===== -->
+    <div id="loginOverlay">
+        <div class="login-box text-center">
+            <div class="mb-6">
+                <span class="text-3xl font-bold text-primary tracking-tight">Brick<span class="font-light">Lane</span></span>
+                <span class="block text-sm text-grayText mt-1">Admin · secure access</span>
+            </div>
+            <p class="text-xs text-grayText mb-4">Enter the admin password to continue</p>
+            <input type="password" id="loginPassword" placeholder="Password" autocomplete="off" />
+            <div id="loginError" class="error"></div>
+            <button id="loginBtn" class="btn-primary mt-2">Unlock</button>
+            <p class="text-[10px] text-grayText/60 mt-4">demo password: 0630</p>
+        </div>
+    </div>
+
+    <!-- ===== MOBILE NAV ===== -->
+    <div class="mobile-nav" id="mobileNav">
+        <div class="brand">Brick<span>Lane</span> <span class="text-[10px] font-bold uppercase bg-primaryLight text-primary px-2 py-0.5 rounded-full ml-1">Admin</span></div>
+        <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+    </div>
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="flex items-center gap-2 px-2 mb-8">
+            <span class="text-2xl font-bold text-primary tracking-tight">Brick<span class="font-light">Lane</span></span>
+            <span class="text-[10px] font-bold uppercase bg-primaryLight text-primary px-2 py-0.5 rounded-full ml-1">Admin</span>
+        </div>
+        <nav class="space-y-0.5">
+            <a href="#" class="sidebar-link active" data-section="orders"><i class="fas fa-clipboard-list"></i><span>Live Orders</span></a>
+            <a href="#" class="sidebar-link" data-section="history"><i class="fas fa-clock-rotate-left"></i><span>Order History</span></a>
+            <a href="#" class="sidebar-link" data-section="products"><i class="fas fa-utensils"></i><span>Products</span></a>
+            <a href="#" class="sidebar-link" data-section="stock"><i class="fas fa-boxes"></i><span>Stock</span></a>
+            <a href="#" class="sidebar-link" data-section="bookings"><i class="fas fa-calendar-check"></i><span>Bookings</span></a>
+            <a href="#" class="sidebar-link" data-section="discounts"><i class="fas fa-tags"></i><span>Discounts</span></a>
+            <a href="#" class="sidebar-link" data-section="analytics"><i class="fas fa-chart-pie"></i><span>Analytics</span></a>
+            <a href="#" class="sidebar-link" data-section="messages"><i class="fas fa-envelope"></i><span>Message</span></a>
+            <a href="#" class="sidebar-link" data-section="settings"><i class="fas fa-gear"></i><span>Settings</span></a>
+        </nav>
+        <div class="absolute bottom-6 left-0 w-full px-4">
+            <div class="flex items-center gap-2 text-sm text-grayText border-t border-borderLight pt-4">
+                <i class="fas fa-circle text-green-400 text-[8px]"></i>
+                <span class="font-medium">Busy Mode</span>
+                <span class="ml-auto text-xs bg-slateMuted px-2 py-0.5 rounded-full">ehsanmoin</span>
+            </div>
+            <button id="logoutBtnSidebar" class="mt-3 w-full text-left text-sm text-red-500/70 hover:text-red-600 flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-red-50 transition">
+                <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <div class="main-content" id="mainContent">
+
+        <!-- top bar -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-ink" id="sectionTitle">Live Orders</h1>
+                <p class="text-sm text-grayText">Manage orders, menu, and bookings in real-time</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="text-sm text-grayText"><i class="far fa-clock mr-1"></i><span id="adminClock">--:--</span></span>
+                <span class="flex items-center gap-1.5 text-xs font-medium text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-200/60">
+                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full pulse-dot"></span> Live
+                </span>
+                <button id="logoutBtnTop" class="text-sm text-grayText hover:text-red-500 transition"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+
+        <!-- stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 stat-grid">
+            <div class="stat-card"><p class="text-xs uppercase text-grayText tracking-wider">Active Orders</p><p id="statOrders" class="text-2xl font-bold text-ink mt-1">0</p></div>
+            <div class="stat-card"><p class="text-xs uppercase text-grayText tracking-wider">Menu Items</p><p id="statMenu" class="text-2xl font-bold text-ink mt-1">0</p></div>
+            <div class="stat-card"><p class="text-xs uppercase text-grayText tracking-wider">Bookings</p><p id="statBookings" class="text-2xl font-bold text-ink mt-1">0</p></div>
+            <div class="stat-card"><p class="text-xs uppercase text-grayText tracking-wider">Users</p><p id="statUsers" class="text-2xl font-bold text-ink mt-1">0</p></div>
+        </div>
+
+        <!-- tab filter -->
+        <div class="flex flex-wrap items-center gap-2 mb-6">
+            <button class="tab-btn active" data-tab="live">Live Orders</button>
+            <button class="tab-btn" data-tab="history">History</button>
+            <button class="tab-btn" data-tab="bookings">Bookings</button>
+            <button class="tab-btn" data-tab="menu">Menu</button>
+            <button class="tab-btn" data-tab="discounts">Discounts</button>
+            <button class="tab-btn" data-tab="analytics">Analytics</button>
+            <button id="addItemQuick" class="ml-auto btn-primary text-sm px-4 py-1.5"><i class="fas fa-plus mr-1"></i>Add Item</button>
+        </div>
+
+        <!-- ===== TAB: LIVE ORDERS ===== -->
+        <div id="tabLive" class="tab-panel">
+            <div class="card overflow-hidden">
+                <div class="card-header flex justify-between items-center">
+                    <span><i class="fas fa-clipboard-list text-grayText mr-2"></i>Orders Management</span>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <span class="text-xs text-grayText">All Orders</span>
+                        <select class="border border-borderLight rounded-full px-3 py-1 text-xs bg-white" id="orderTypeFilter">
+                            <option value="all">All Types</option>
+                            <option value="PickUp">PickUp</option>
+                            <option value="Delivery">Delivery</option>
+                        </select>
+                        <button id="refreshOrdersBtn" class="text-xs text-primary bg-primaryLight px-3 py-1 rounded-full hover:bg-blue-100 transition"><i class="fas fa-sync mr-1"></i>Refresh</button>
+                        <button id="exportOrdersCsv" class="text-xs text-primary bg-primaryLight px-3 py-1 rounded-full hover:bg-blue-100 transition"><i class="fas fa-file-export mr-1"></i>Export CSV</button>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="order-stats-grid" id="orderStatsGrid">
+                        <div class="order-stat-item"><span class="stat-number" id="statTotalOrders">0</span><div class="stat-label">Total</div></div>
+                        <div class="order-stat-item"><span class="stat-number" id="statPendingOrders">0</span><div class="stat-label">Pending</div></div>
+                        <div class="order-stat-item"><span class="stat-number" id="statAcceptedOrders">0</span><div class="stat-label">Accepted</div></div>
+                        <div class="order-stat-item"><span class="stat-number" id="statDeclinedOrders">0</span><div class="stat-label">Declined</div></div>
+                        <div class="order-stat-item"><span class="stat-number" id="statPreparingOrders">0</span><div class="stat-label">Preparing</div></div>
+                        <div class="order-stat-item"><span class="stat-number" id="statReadyOrders">0</span><div class="stat-label">Ready</div></div>
+                    </div>
+                    <div class="overflow-x-auto scroll-thin" id="ordersContainer">
+                        <p class="text-grayText text-sm">Loading orders...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: HISTORY ===== -->
+        <div id="tabHistory" class="tab-panel hidden">
+            <div class="card overflow-hidden">
+                <div class="card-header flex justify-between items-center">
+                    <span><i class="fas fa-clock-rotate-left text-grayText mr-2"></i>Order History</span>
+                    <div class="flex gap-2"><input type="text" placeholder="Search order..." class="border border-borderLight rounded-full px-4 py-1.5 text-sm w-48 focus:border-primary" /><button class="btn-outline-primary text-sm">Search</button></div>
+                </div>
+                <div class="p-4 overflow-x-auto" id="historyContainer">
+                    <p class="text-grayText text-sm">Loading history...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: BOOKINGS ===== -->
+        <div id="tabBookings" class="tab-panel hidden">
+            <div class="card">
+                <div class="card-header flex justify-between items-center">
+                    <span><i class="fas fa-calendar-check text-grayText mr-2"></i>Table Bookings</span>
+                    <div class="flex gap-2">
+                        <button id="refreshBookingsBtn" class="text-xs text-primary bg-primaryLight px-3 py-1 rounded-full hover:bg-blue-100 transition"><i class="fas fa-sync mr-1"></i>Refresh</button>
+                    </div>
+                </div>
+                <div class="p-4 overflow-x-auto scroll-thin" id="bookingsContainer">
+                    <p class="text-grayText text-sm">Loading bookings...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: MENU ===== -->
+        <div id="tabMenu" class="tab-panel hidden">
+            <div class="card">
+                <div class="card-header flex justify-between items-center">
+                    <span><i class="fas fa-utensils text-grayText mr-2"></i>Menu Items</span>
+                    <button id="addMenuItemBtn" class="btn-primary text-sm"><i class="fas fa-plus mr-1"></i>Add</button>
+                </div>
+                <div class="p-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5" id="menuContainer">
+                    <p class="text-grayText col-span-full">Loading menu...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: DISCOUNTS ===== -->
+        <div id="tabDiscounts" class="tab-panel hidden">
+            <div class="card">
+                <div class="card-header flex justify-between items-center">
+                    <span><i class="fas fa-tags text-grayText mr-2"></i>Discount Control</span>
+                    <div class="flex gap-2">
+                        <button id="exportCsvBtn" class="btn-outline-primary text-sm"><i class="fas fa-file-export mr-1"></i>Export CSV</button>
+                        <button id="importCsvBtn" class="btn-outline-primary text-sm"><i class="fas fa-file-import mr-1"></i>Import CSV</button>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="bg-slateLight/50 rounded-xl p-4 mb-6 border border-borderLight">
+                        <h4 class="font-semibold text-ink mb-3"><i class="fas fa-gift text-primary mr-2"></i>Create Promotion</h4>
+                        <form id="discountForm" class="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
+                            <div>
+                                <label class="text-xs text-grayText block mb-1">Campaign Name</label>
+                                <input type="text" id="campaignName" placeholder="e.g. Flash Sale" class="w-full border border-borderLight rounded-xl px-3 py-2 text-sm focus:border-primary" required />
+                            </div>
+                            <div>
+                                <label class="text-xs text-grayText block mb-1">Item</label>
+                                <select id="campaignItemSelect" class="w-full border border-borderLight rounded-xl px-3 py-2 text-sm focus:border-primary">
+                                    <option value="">-- Choose from menu --</option>
+                                    <option value="custom">+ Type custom</option>
+                                </select>
+                                <input type="text" id="campaignItemCustom" placeholder="Or type item name" class="w-full border border-borderLight rounded-xl px-3 py-2 text-sm focus:border-primary mt-1 hidden" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-grayText block mb-1">Discount %</label>
+                                <input type="number" id="campaignDiscount" placeholder="e.g. 20" min="0" max="100" class="w-full border border-borderLight rounded-xl px-3 py-2 text-sm focus:border-primary" required />
+                            </div>
+                            <div>
+                                <label class="text-xs text-grayText block mb-1">Original Price ($)</label>
+                                <input type="number" id="campaignOriginalPrice" placeholder="e.g. 19.99" step="0.01" class="w-full border border-borderLight rounded-xl px-3 py-2 text-sm focus:border-primary" required />
+                            </div>
+                            <div>
+                                <label class="text-xs text-grayText block mb-1">Start Date & Time</label>
+                                <input type="datetime-local" id="campaignStart" class="w-full border border-borderLight rounded-xl px-3 py-2 text-sm focus:border-primary" required />
+                            </div>
+                            <div>
+                                <label class="text-xs text-grayText block mb-1">End Date & Time</label>
+                                <input type="datetime-local" id="campaignEnd" class="w-full border border-borderLight rounded-xl px-3 py-2 text-sm focus:border-primary" required />
+                            </div>
+                            <div class="md:col-span-2 flex justify-end">
+                                <button type="submit" class="btn-primary text-sm px-6 py-2"><i class="fas fa-save mr-1"></i>Save Campaign</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-6 mb-4 p-3 bg-primaryLight/30 rounded-xl border border-primary/20">
+                        <div><span class="text-xs text-grayText">Discount:</span> <span id="liveDiscountDisplay" class="font-bold text-2xl text-primary">0%</span></div>
+                        <div><span class="text-xs text-grayText">Countdown:</span> <span id="liveCountdownDisplay" class="font-mono text-lg font-semibold countdown-number">00 : 00 : 00</span></div>
+                        <div class="text-xs text-grayText"><i class="fas fa-circle text-green-400 mr-1"></i> Real-time sync</div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-left text-grayText border-b border-borderLight">
+                                    <th class="pb-2 font-semibold">CAMPAIGN</th>
+                                    <th class="pb-2 font-semibold">ITEM</th>
+                                    <th class="pb-2 font-semibold">ORIGINAL</th>
+                                    <th class="pb-2 font-semibold">DISCOUNTED</th>
+                                    <th class="pb-2 font-semibold">DISCOUNT %</th>
+                                    <th class="pb-2 font-semibold">START</th>
+                                    <th class="pb-2 font-semibold">END</th>
+                                    <th class="pb-2 font-semibold">STATUS</th>
+                                    <th class="pb-2 font-semibold">ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="discountTableBody">
+                                <tr><td colspan="9" class="text-center py-4 text-grayText">No campaigns yet</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: ANALYTICS ===== -->
+        <div id="tabAnalytics" class="tab-panel hidden">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="stat-card"><p class="text-xs uppercase text-grayText">Today's Orders</p><p id="analyticsToday" class="text-2xl font-bold text-ink">0</p></div>
+                <div class="stat-card"><p class="text-xs uppercase text-grayText">This Week</p><p id="analyticsWeek" class="text-2xl font-bold text-ink">0</p></div>
+                <div class="stat-card"><p class="text-xs uppercase text-grayText">Revenue</p><p id="analyticsRevenue" class="text-2xl font-bold text-ink">$0</p></div>
+            </div>
+        </div>
+
+        <!-- footer -->
+        <div class="mt-8 flex flex-wrap items-center gap-3 text-sm text-grayText border-t border-borderLight pt-4">
+            <span><i class="far fa-circle text-green-400 text-[8px] mr-1"></i> System online</span>
+            <span class="bg-slateMuted px-3 py-1 rounded-full text-xs">v2.4</span>
+            <button class="text-primary hover:underline text-sm ml-auto">Export data</button>
+        </div>
+    </div>
+
+    <!-- ===== ORDER DETAIL MODAL ===== -->
+    <div id="orderModal" class="hidden fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl border border-borderLight">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="font-bold text-xl text-ink" id="modalOrderId">Order #</h3>
+                    <p class="text-xs text-grayText" id="modalOrderDate">—</p>
+                </div>
+                <button id="modalClose" class="text-grayText hover:text-ink"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="modalContent"><p class="text-grayText">Loading...</p></div>
+            <div class="flex flex-wrap gap-2 mt-5 pt-4 border-t border-borderLight" id="modalActions"></div>
+        </div>
+    </div>
+
+    <!-- ===== ADD MENU MODAL ===== -->
+    <div id="addItemModal" class="hidden fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-borderLight">
+            <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-ink">Add Menu Item</h3><button id="addItemModalClose" class="text-grayText hover:text-ink"><i class="fas fa-times"></i></button></div>
+            <form id="addItemForm" class="space-y-4">
+                <input required type="text" id="itemName" placeholder="Item name" class="w-full border border-borderLight rounded-xl px-4 py-3 text-sm focus:border-primary" />
+                <input required type="text" id="itemPrice" placeholder="Price (e.g. 12)" class="w-full border border-borderLight rounded-xl px-4 py-3 text-sm focus:border-primary" />
+                <textarea id="itemDesc" rows="2" placeholder="Description" class="w-full border border-borderLight rounded-xl px-4 py-3 text-sm focus:border-primary"></textarea>
+                <input type="text" id="itemImage" placeholder="Image URL (optional)" class="w-full border border-borderLight rounded-xl px-4 py-3 text-sm focus:border-primary" />
+                <button type="submit" class="btn-primary w-full py-3">Add Item</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== EDIT MENU MODAL ===== -->
+    <div id="editItemModal" class="hidden fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-borderLight">
+            <div class="flex justify-between items-center mb-4"><h3 class="font-bold text-ink">Edit Menu Item</h3><button id="editItemModalClose" class="text-grayText hover:text-ink"><i class="fas fa-times"></i></button></div>
+            <form id="editItemForm" class="space-y-4">
+                <input type="hidden" id="editItemId" />
+                <input required type="text" id="editItemName" placeholder="Item name" class="w-full border border-borderLight rounded-xl px-4 py-3 text-sm focus:border-primary" />
+                <input required type="text" id="editItemPrice" placeholder="Price (e.g. 12)" class="w-full border border-borderLight rounded-xl px-4 py-3 text-sm focus:border-primary" />
+                <textarea id="editItemDesc" rows="2" placeholder="Description" class="w-full border border-borderLight rounded-xl px-4 py-3 text-sm focus:border-primary"></textarea>
+                <input type="text" id="editItemImage" placeholder="Image URL (optional)" class="w-full border border-borderLight rounded-xl px-4 py-3 text-sm focus:border-primary" />
+                <div class="flex gap-2">
+                    <button type="submit" class="btn-primary flex-1 py-3">Update Item</button>
+                    <button type="button" id="editItemCancelBtn" class="btn-outline-primary flex-1 py-3 text-center">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== BOOKING NOTE MODAL ===== -->
+    <div id="bookingNoteModal" class="hidden fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-borderLight">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-ink"><i class="fas fa-pen text-primary mr-2"></i>Booking Note / Nickname</h3>
+                <button id="bookingNoteModalClose" class="text-grayText hover:text-ink"><i class="fas fa-times"></i></button>
+            </div>
+            <p class="text-sm text-grayText mb-2">Add a nickname or admin note for this booking.</p>
+            <input type="text" id="bookingNoteInput" placeholder="e.g. VIP, John's table, Birthday" class="w-full border border-borderLight rounded-xl px-4 py-3 text-sm focus:border-primary mb-3" />
+            <div class="flex gap-2">
+                <button id="bookingNoteSaveBtn" class="btn-primary flex-1 py-2.5 text-sm"><i class="fas fa-check mr-1"></i>Save</button>
+                <button id="bookingNoteCancelBtn" class="btn-outline-primary flex-1 py-2.5 text-sm text-center">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BOOKING DETAIL POPUP ===== -->
+    <div class="booking-popup-overlay" id="bookingPopup">
+        <div class="booking-popup">
+            <div class="popup-header">
+                <h3><i class="fas fa-calendar-check"></i> Booking Details</h3>
+                <button class="popup-close" id="bookingPopupClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="bookingPopupContent"></div>
+            <div class="popup-actions" id="bookingPopupActions"></div>
+        </div>
+    </div>
+
+    <!-- ===== FIREBASE ===== -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+
+    <script>
+        // ================== FIREBASE ==================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBQLWEuZ_ydmR7Xe9vNDYxvZiWMme4wj0M",
+            authDomain: "bricklane-28f56.firebaseapp.com",
+            projectId: "bricklane-28f56",
+            storageBucket: "bricklane-28f56.firebasestorage.app",
+            messagingSenderId: "767079384468",
+            appId: "1:767079384468:web:e76e47f6e151169b4efb81",
+            measurementId: "G-H5RMLCQD7W"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ================== HELPERS ==================
+        function getCustomerName(order) {
+            if (order.userName && order.userName !== 'Guest') return order.userName;
+            if (order.name && order.name.trim() !== '') return order.name;
+            if (order.userEmail && order.userEmail.trim() !== '') return order.userEmail;
+            return 'Guest';
+        }
+
+        function showNotification(title, message) {
+            const banner = document.getElementById('notificationBanner');
+            if (banner) banner.remove();
+            const div = document.createElement('div');
+            div.id = 'notificationBanner';
+            div.className =
+                'fixed top-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-primary/30 shadow-xl rounded-2xl px-6 py-3 flex items-center gap-4 text-ink max-w-[90%]';
+            div.innerHTML =
+                `<span class="font-semibold">${title}</span><span class="text-grayText">${message}</span><button id="notifClose" class="text-grayText ml-4">✕</button>`;
+            document.body.appendChild(div);
+            document.getElementById('notifClose').addEventListener('click', () => div.remove());
+            setTimeout(() => div.remove(), 4000);
+        }
+
+        function getStatusBadge(status) {
+            const map = {
+                'Pending': 'badge-status-pending',
+                'Confirmed': 'badge-status-accepted',
+                'Accepted': 'badge-status-accepted',
+                'Declined': 'badge-status-declined',
+                'Preparing': 'badge-status-preparing',
+                'Ready': 'badge-status-ready',
+                'Complete': 'badge-status-ready',
+                'Packed': 'badge-status-preparing',
+                'Picked Up': 'badge-status-ready'
+            };
+            return map[status] || 'badge-status-pending';
+        }
+
+        function formatDate(ts) {
+            if (!ts) return '—';
+            const d = ts.toDate ? ts.toDate() : new Date(ts);
+            return d.toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatDateFull(ts) {
+            if (!ts) return '—';
+            const d = ts.toDate ? ts.toDate() : new Date(ts);
+            return d.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+                second: '2-digit' });
+        }
+
+        function getStatusFlow(status) {
+            const flow = ['Pending', 'Accepted', 'Preparing', 'Ready', 'Complete'];
+            const idx = flow.indexOf(status);
+            return flow.slice(idx + 1);
+        }
+
+        // ================== CLOCK ==================
+        function updateClock() {
+            document.getElementById('adminClock').textContent = new Date().toLocaleTimeString('en-GB', { hour: '2-digit',
+                minute: '2-digit' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ================== LOGIN ==================
+        const loginOverlay = document.getElementById('loginOverlay');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginError = document.getElementById('loginError');
+        const loginBtn = document.getElementById('loginBtn');
+
+        function tryLogin() {
+            const pwd = loginPassword.value.trim();
+            if (pwd === '0630') {
+                loginOverlay.classList.add('hidden');
+                initAdmin();
+                auth.signInAnonymously().catch(() => {});
+            } else {
+                loginError.textContent = '❌ Incorrect password. Try again.';
+                loginPassword.value = '';
+                loginPassword.focus();
+            }
+        }
+        loginBtn.addEventListener('click', tryLogin);
+        loginPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryLogin(); });
+
+        // ================== SEED MENU ==================
+        const defaultMenu = [
+            { name: 'Avocado Sourdough', price: 10.00, desc: 'Smashed avocado, feta, chilli', images: ['https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=300&auto=format'] },
+            { name: 'Brick Lane Benedict', price: 10.00, desc: 'Poached eggs, ham hock, hollandaise', images: ['https://images.unsplash.com/photo-1550547660-d9450f859349?w=300&auto=format'] },
+            { name: 'Black Coffee', price: 10.00, desc: 'Small-batch beans, silky microfoam', images: ['https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=300&auto=format'] },
+            { name: 'Corn Fritters', price: 10.00, desc: 'Charred corn, haloumi, chilli jam', images: ['https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=300&auto=format'] },
+            { name: 'Shakshuka', price: 10.00, desc: 'Baked eggs, tomato, whipped feta', images: ['https://images.unsplash.com/photo-1590412200988-a436970781fa?w=300&auto=format'] },
+            { name: 'Banana Bread', price: 10.00, desc: 'Toasted, salted butter, honey', images: ['https://images.unsplash.com/photo-1606101273945-e9c92e670c72?w=300&auto=format'] }
+        ];
+
+        function seedMenu() {
+            db.collection('menuItems').get().then(snap => {
+                if (snap.empty) {
+                    defaultMenu.forEach(item => db.collection('menuItems').add(item));
+                }
+            }).catch(() => {});
+        }
+
+        // ================== STATE ==================
+        let ordersUnsubscribe = null,
+            bookingsUnsubscribe = null,
+            menuUnsubscribe = null,
+            discountsUnsubscribe = null;
+        let allOrders = [];
+        let allBookings = [];
+        let isAuthenticated = false;
+        let bookingNoteTargetId = null;
+        let discountCampaigns = [];
+        let countdownInterval = null;
+        let currentOrderFilter = 'all';
+
+        // ================== BOOKINGS ==================
+        function renderBookings(bookings) {
+            const container = document.getElementById('bookingsContainer');
+            const statBookings = document.getElementById('statBookings');
+            if (statBookings) statBookings.textContent = bookings.length;
+            if (!bookings.length) {
+                container.innerHTML = '<div class="text-center py-8 text-grayText">No bookings</div>';
+                return;
+            }
+            const sorted = [...bookings].sort((a, b) => {
+                const da = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)) : new Date(0);
+                const db2 = b.createdAt ? (b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt)) : new Date(0);
+                return db2 - da;
+            });
+            let html =
+                `<table class="w-full text-sm"><thead><tr class="text-left text-grayText border-b border-borderLight"><th class="pb-2 font-semibold">#</th><th class="pb-2 font-semibold">Name / Nickname</th><th class="pb-2 font-semibold">Phone</th><th class="pb-2 font-semibold">Shop</th><th class="pb-2 font-semibold">Date & Time</th><th class="pb-2 font-semibold">Guests</th><th class="pb-2 font-semibold">Status</th><th class="pb-2 font-semibold">Created</th><th class="pb-2 font-semibold">Actions</th></tr></thead><tbody>`;
+            sorted.forEach((b, idx) => {
+                const status = b.status || 'Pending';
+                const note = b.adminNote || b.nickname || '';
+                const hasNote = note.length > 0;
+                const nameDisplay = b.userName || b.name || 'Guest';
+                const noteBadge = hasNote ?
+                    `<span class="booking-note-badge has-note" title="${note}">${note.length > 12 ? note.slice(0,12)+'…' : note}</span>` :
+                    '';
+                html += `
+                    <tr class="border-b border-borderLight/50 hover:bg-slateLight/40 transition">
+                        <td class="py-2.5 font-mono text-xs">#${b.id ? b.id.slice(0,4) : idx+1}</td>
+                        <td class="py-2.5"><span class="font-medium">${nameDisplay}</span> ${noteBadge}${b.userEmail ? `<span class="text-xs text-grayText block">${b.userEmail}</span>` : ''}</td>
+                        <td class="py-2.5 text-xs">${b.phone || '—'}</td>
+                        <td class="py-2.5"><span class="px-2 py-0.5 rounded-full text-xs bg-gray-100">${b.branch || b.shop || 'CBD'}</span></td>
+                        <td class="py-2.5 text-xs">${b.date || '—'} ${b.time || ''}</td>
+                        <td class="py-2.5">${b.guests || '—'}</td>
+                        <td class="py-2.5"><span class="px-3 py-0.5 rounded-full text-xs border ${status === 'Confirmed' ? 'bg-green-50 text-green-700 border-green-200' : status === 'Declined' ? 'bg-red-50 text-red-700 border-red-200' : status === 'Complete' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}">${status}</span></td>
+                        <td class="py-2.5 text-xs">${formatDate(b.createdAt)}</td>
+                        <td class="py-2.5"><div class="booking-actions-wrap">
+                            <button class="action-icon view-booking-detail" data-id="${b.id}" title="View Details"><i class="fas fa-eye"></i></button>
+                            ${status === 'Pending' ? `<button class="action-icon confirm booking-action" data-id="${b.id}" data-action="confirm"><i class="fas fa-check"></i> Confirm</button><button class="action-icon decline booking-action" data-id="${b.id}" data-action="decline"><i class="fas fa-times"></i> Decline</button>` : ''}
+                            ${status === 'Confirmed' ? `<button class="action-icon complete booking-action" data-id="${b.id}" data-action="complete"><i class="fas fa-check-double"></i> Complete</button>` : ''}
+                            <button class="action-icon booking-note-btn" data-id="${b.id}" title="Add/Edit Nickname"><i class="fas fa-pen"></i></button>
+                            <button class="action-icon booking-delete-btn" data-id="${b.id}" title="Delete" style="color:#dc3c4c;"><i class="fas fa-trash"></i></button>
+                        </div></td>
+                    </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+
+            container.querySelectorAll('.view-booking-detail').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openBookingPopup(this.dataset.id);
+                });
+            });
+            container.querySelectorAll('.booking-action').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    handleBookingAction(this.dataset.id, this.dataset.action);
+                });
+            });
+            container.querySelectorAll('.booking-note-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    openBookingNoteModal(this.dataset.id);
+                });
+            });
+            container.querySelectorAll('.booking-delete-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const id = this.dataset.id;
+                    if (confirm('Delete this booking?')) {
+                        db.collection('bookings').doc(id).delete()
+                            .then(() => showNotification('Deleted', 'Booking removed'))
+                            .catch(err => console.error(err));
+                    }
+                });
+            });
+        }
+
+        function handleBookingAction(id, action) {
+            const updates = { 'confirm': { status: 'Confirmed' }, 'decline': { status: 'Declined' }, 'complete': { status: 'Complete' } };
+            if (!updates[action]) return;
+            db.collection('bookings').doc(id).update({ ...updates[action], updatedAt: firebase.firestore.FieldValue
+                    .serverTimestamp() })
+                .then(() => {
+                    showNotification('Updated', `Booking ${action}ed`);
+                    document.getElementById('bookingPopup').classList.remove('active');
+                })
+                .catch(() => showNotification('Error', 'Failed to update booking'));
+        }
+
+        function openBookingPopup(bookingId) {
+            const overlay = document.getElementById('bookingPopup');
+            const content = document.getElementById('bookingPopupContent');
+            const actions = document.getElementById('bookingPopupActions');
+            overlay.classList.add('active');
+            content.innerHTML = '<p class="text-grayText text-sm">Loading...</p>';
+            db.collection('bookings').doc(bookingId).get().then(doc => {
+                if (!doc.exists) { content.innerHTML = '<p class="text-red-500">Not found</p>'; return; }
+                const b = doc.data();
+                const status = b.status || 'Pending';
+                const statusClass = status.toLowerCase();
+                const created = formatDateFull(b.createdAt);
+                const dateTime = b.date ? `${b.date} ${b.time || ''}` : '—';
+                content.innerHTML = `
+                    <div class="detail-row"><span class="label">Booking ID</span><span class="value">#${bookingId.slice(0,8)}</span></div>
+                    <div class="detail-row"><span class="label">Customer</span><span class="value">${b.userName || b.name || 'Guest'}</span></div>
+                    <div class="detail-row"><span class="label">Phone</span><span class="value">${b.phone || '—'}</span></div>
+                    <div class="detail-row"><span class="label">Login Email</span><span class="value">${b.userEmail || '—'}</span></div>
+                    <div class="detail-row"><span class="label">Date & Time</span><span class="value">${dateTime}</span></div>
+                    <div class="detail-row"><span class="label">Guests</span><span class="value">${b.guests || '—'}</span></div>
+                    <div class="detail-row"><span class="label">Special Request</span><span class="value">${b.specialRequest || 'None'}</span></div>
+                    <div class="detail-row"><span class="label">Additional Requests</span><span class="value">${b.additionalRequests || 'None'}</span></div>
+                    <div class="detail-row"><span class="label">Status</span><span class="value"><span class="status-badge-popup ${statusClass}">${status}</span></span></div>
+                    <div class="detail-row"><span class="label">Created</span><span class="value">${created}</span></div>
+                    ${b.adminNote ? `<div class="detail-row" style="border-bottom:2px solid #fef3c7;"><span class="label" style="color:#b45309;">📝 Note</span><span class="value" style="color:#b45309;font-weight:400;">${b.adminNote}</span></div>` : ''}
+                `;
+                let actionHtml = '';
+                if (status === 'Pending') {
+                    actionHtml +=
+                        `<button class="btn-confirm" id="popupConfirmBtn"><i class="fas fa-check"></i> Confirm</button><button class="btn-decline" id="popupDeclineBtn"><i class="fas fa-times"></i> Decline</button>`;
+                }
+                if (status === 'Confirmed') {
+                    actionHtml += `<button class="btn-complete" id="popupCompleteBtn"><i class="fas fa-check-double"></i> Complete</button>`;
+                }
+                actionHtml +=
+                    `<button class="btn-invoice" id="popupInvoiceBtn"><i class="fas fa-file-pdf"></i> Invoice</button><button class="btn-close-popup" id="popupCloseActionBtn"><i class="fas fa-window-close"></i> Close</button>`;
+                actions.innerHTML = actionHtml;
+                document.getElementById('popupConfirmBtn')?.addEventListener('click', () => handleBookingAction(bookingId,
+                    'confirm'));
+                document.getElementById('popupDeclineBtn')?.addEventListener('click', () => handleBookingAction(bookingId,
+                    'decline'));
+                document.getElementById('popupCompleteBtn')?.addEventListener('click', () => handleBookingAction(bookingId,
+                    'complete'));
+                document.getElementById('popupInvoiceBtn')?.addEventListener('click', () => generateBookingInvoice(bookingId,
+                    b));
+                document.getElementById('popupCloseActionBtn')?.addEventListener('click', () => overlay.classList.remove(
+                    'active'));
+            }).catch(() => { content.innerHTML = '<p class="text-red-500">Error loading</p>'; });
+        }
+
+        function generateBookingInvoice(bookingId, data) {
+            const name = data.userName || data.name || 'Guest';
+            const phone = data.phone || '—';
+            const email = data.userEmail || '—';
+            const dateTime = data.date ? `${data.date} ${data.time || ''}` : '—';
+            const guests = data.guests || '—';
+            const special = data.specialRequest || 'None';
+            const additional = data.additionalRequests || 'None';
+            const status = data.status || 'Pending';
+            const created = formatDateFull(data.createdAt);
+            const note = data.adminNote || '';
+            const invoiceHtml = `
+                <div style="font-family:'Inter',sans-serif;max-width:600px;margin:0 auto;padding:30px;background:#fff;color:#1a1a1a;border-radius:12px;">
+                    <div style="text-align:center;border-bottom:2px solid #1a5cff;padding-bottom:15px;margin-bottom:20px;">
+                        <h2 style="color:#1a5cff;font-size:28px;margin:0;">Brick Lane · Booking Invoice</h2>
+                        <p style="color:#6b7f96;font-size:14px;margin-top:4px;">Booking #${bookingId.slice(0,8)}</p>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:20px;font-size:14px;">
+                        <div><span style="color:#6b7f96;">Customer</span> ${name}</div>
+                        <div><span style="color:#6b7f96;">Phone</span> ${phone}</div>
+                        <div><span style="color:#6b7f96;">Email</span> ${email}</div>
+                        <div><span style="color:#6b7f96;">Guests</span> ${guests}</div>
+                        <div style="grid-column:span 2;"><span style="color:#6b7f96;">Date & Time</span> ${dateTime}</div>
+                        <div style="grid-column:span 2;"><span style="color:#6b7f96;">Special Request</span> ${special}</div>
+                        <div style="grid-column:span 2;"><span style="color:#6b7f96;">Additional Requests</span> ${additional}</div>
+                        <div><span style="color:#6b7f96;">Status</span> ${status}</div>
+                        <div><span style="color:#6b7f96;">Created</span> ${created}</div>
+                        ${note ? `<div style="grid-column:span 2;background:#fef3c7;padding:10px 14px;border-radius:8px;margin-top:4px;"><span style="color:#b45309;font-weight:600;">📝 Note:</span> ${note}</div>` : ''}
+                    </div>
+                    <div style="text-align:center;margin-top:30px;font-size:12px;color:#6b7f96;border-top:1px solid #eef2f8;padding-top:15px;">
+                        Thank you for booking with Brick Lane!<br>© Brick Lane - ${new Date().getFullYear()}
+                    </div>
+                </div>
+            `;
+            const container = document.createElement('div');
+            container.innerHTML = invoiceHtml;
+            document.body.appendChild(container);
+            const element = container.firstElementChild;
+            const opt = {
+                margin: 10,
+                filename: `Booking_${bookingId.slice(0,8)}_${new Date().toISOString().split('T')[0]}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save().then(() => {
+                showNotification('📄 Invoice Downloaded', 'Booking invoice generated');
+                document.body.removeChild(container);
+            }).catch(() => { document.body.removeChild(container); });
+        }
+
+        // ================== BOOKING NOTE MODAL ==================
+        function openBookingNoteModal(bookingId) {
+            bookingNoteTargetId = bookingId;
+            const modal = document.getElementById('bookingNoteModal');
+            const input = document.getElementById('bookingNoteInput');
+            input.value = '';
+            db.collection('bookings').doc(bookingId).get().then(doc => {
+                if (doc.exists) input.value = doc.data().adminNote || doc.data().nickname || '';
+                modal.classList.remove('hidden');
+                input.focus();
+            }).catch(() => { modal.classList.remove('hidden');
+                input.focus(); });
+        }
+
+        function closeBookingNoteModal() {
+            document.getElementById('bookingNoteModal').classList.add('hidden');
+            bookingNoteTargetId = null;
+        }
+        document.getElementById('bookingNoteModalClose').addEventListener('click', closeBookingNoteModal);
+        document.getElementById('bookingNoteCancelBtn').addEventListener('click', closeBookingNoteModal);
+        document.getElementById('bookingNoteModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeBookingNoteModal();
+        });
+        document.getElementById('bookingNoteSaveBtn').addEventListener('click', function() {
+            const id = bookingNoteTargetId;
+            const note = document.getElementById('bookingNoteInput').value.trim();
+            if (!id) return;
+            if (!note && !confirm('Remove existing note?')) return;
+            db.collection('bookings').doc(id).update({
+                adminNote: note || '',
+                nickname: note || '',
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => { showNotification('Saved', 'Booking note updated');
+                closeBookingNoteModal(); })
+            .catch(() => showNotification('Error', 'Failed to save note'));
+        });
+
+        // ================== LOAD BOOKINGS ==================
+        function loadBookings() {
+            if (bookingsUnsubscribe) bookingsUnsubscribe();
+            bookingsUnsubscribe = db.collection('bookings').orderBy('createdAt', 'desc').onSnapshot(snap => {
+                const bookings = [];
+                snap.forEach(doc => { const d = doc.data();
+                    d.id = doc.id;
+                    bookings.push(d); });
+                allBookings = bookings;
+                renderBookings(bookings);
+            }, err => {
+                console.error(err);
+                document.getElementById('bookingsContainer').innerHTML =
+                    '<p class="text-red-500">Error loading bookings.</p>';
+            });
+        }
+
+        // ================== ORDERS ==================
+        function loadOrders() {
+            if (ordersUnsubscribe) ordersUnsubscribe();
+            ordersUnsubscribe = db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(snap => {
+                allOrders = [];
+                snap.forEach(doc => { const d = doc.data();
+                    d.id = doc.id;
+                    allOrders.push(d); });
+                renderOrdersTable(allOrders);
+                updateStats(allOrders);
+                updateAnalytics(allOrders);
+            }, err => {
+                console.error(err);
+                document.getElementById('ordersContainer').innerHTML = '<p class="text-red-500">Error loading orders.</p>';
+            });
+        }
+
+        function renderOrdersTable(orders) {
+            const container = document.getElementById('ordersContainer');
+            let filtered = orders;
+            if (currentOrderFilter !== 'all') filtered = orders.filter(o => o.type === currentOrderFilter);
+            const total = filtered.length;
+            const pending = filtered.filter(o => o.status === 'Pending').length;
+            const accepted = filtered.filter(o => o.status === 'Accepted' || o.status === 'Confirmed').length;
+            const declined = filtered.filter(o => o.status === 'Declined').length;
+            const preparing = filtered.filter(o => o.status === 'Preparing' || o.status === 'Packed').length;
+            const ready = filtered.filter(o => o.status === 'Ready' || o.status === 'Picked Up' || o.status === 'Complete')
+                .length;
+            document.getElementById('statTotalOrders').textContent = total;
+            document.getElementById('statPendingOrders').textContent = pending;
+            document.getElementById('statAcceptedOrders').textContent = accepted;
+            document.getElementById('statDeclinedOrders').textContent = declined;
+            document.getElementById('statPreparingOrders').textContent = preparing;
+            document.getElementById('statReadyOrders').textContent = ready;
+            if (!filtered.length) {
+                container.innerHTML = '<div class="text-center py-8 text-grayText">No orders found</div>';
+                return;
+            }
+            let html =
+                `<table class="orders-table"><thead><tr><th>ORDER ID</th><th>CUSTOMER</th><th>TYPE</th><th>ITEMS</th><th>TOTAL</th><th>STATUS</th><th>DATE</th><th>ACTIONS</th></tr></thead><tbody>`;
+            filtered.forEach((o, idx) => {
+                const orderId = o.id || 'unknown';
+                const customerName = getCustomerName(o);
+                const type = o.type || 'PickUp';
+                const totalAmount = o.total || '$0.00';
+                const status = o.status || 'Pending';
+                const statusClass = getStatusBadge(status);
+                const dateStr = formatDateFull(o.createdAt);
+                let itemsSummary = '—';
+                if (o.items && o.items.length) {
+                    const first = o.items[0];
+                    const more = o.items.length > 1 ? ` +${o.items.length - 1} more` : '';
+                    itemsSummary = `${o.items.length}x${first.name || 'item'}${more}`;
+                }
+                html += `
+                    <tr>
+                        <td class="order-id">#${orderId.slice(0,8)}</td>
+                        <td><span class="font-medium">${customerName}</span></td>
+                        <td><span class="px-2 py-0.5 rounded-full text-xs bg-gray-100">${type}</span></td>
+                        <td class="text-sm">${itemsSummary}</td>
+                        <td class="font-semibold">${totalAmount}</td>
+                        <td><span class="${statusClass}">${status}</span></td>
+                        <td class="text-xs">${dateStr}</td>
+                        <td><div class="flex flex-wrap gap-1">
+                            ${status === 'Pending' ? `<button class="order-action-btn accept" data-id="${orderId}" data-action="accept"><i class="fas fa-check mr-0.5"></i>Accept</button><button class="order-action-btn decline" data-id="${orderId}" data-action="decline"><i class="fas fa-times mr-0.5"></i>Decline</button>` : ''}
+                            ${status === 'Accepted' ? `<button class="order-action-btn" style="background:#dbeafe;border-color:#93c5fd;color:#1e40af;" data-id="${orderId}" data-action="preparing">Preparing</button>` : ''}
+                            ${status === 'Preparing' || status === 'Packed' ? `<button class="order-action-btn" style="background:#e0e7ff;border-color:#a5b4fc;color:#3730a3;" data-id="${orderId}" data-action="ready">Ready</button>` : ''}
+                            ${status === 'Ready' || status === 'Picked Up' ? `<button class="order-action-btn" style="background:#d1fae5;border-color:#6ee7b7;color:#065f46;" data-id="${orderId}" data-action="complete">Complete</button>` : ''}
+                            <button class="order-action-btn view" data-id="${orderId}" data-action="view"><i class="fas fa-eye"></i></button>
+                        </div></td>
+                    </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+            container.querySelectorAll('.order-action-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const id = this.dataset.id;
+                    const action = this.dataset.action;
+                    if (action === 'view') { openOrderModal(id); return; }
+                    const statusMap = { 'accept': 'Accepted', 'decline': 'Declined', 'preparing': 'Preparing',
+                        'ready': 'Ready', 'complete': 'Complete' };
+                    if (statusMap[action]) updateOrderStatus(id, statusMap[action]);
+                });
+            });
+        }
+
+        function updateOrderStatus(orderId, newStatus) {
+            db.collection('orders').doc(orderId).update({
+                status: newStatus,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                statusHistory: firebase.firestore.FieldValue.arrayUnion({ status: newStatus, timestamp: firebase
+                        .firestore.FieldValue.serverTimestamp() })
+            }).then(() => showNotification('Status updated', `Order → ${newStatus}`))
+            .catch(err => console.error(err));
+        }
+
+        function openOrderModal(orderId) {
+            const modal = document.getElementById('orderModal');
+            document.getElementById('modalOrderId').textContent = `Order #${orderId.slice(0,8)}`;
+            modal.classList.remove('hidden');
+            const content = document.getElementById('modalContent');
+            const actions = document.getElementById('modalActions');
+            content.innerHTML = '<p class="text-grayText">Loading...</p>';
+            actions.innerHTML = '';
+            db.collection('orders').doc(orderId).get().then(doc => {
+                if (!doc.exists) { content.innerHTML = '<p class="text-red-500">Not found</p>'; return; }
+                const d = doc.data();
+                const customerName = getCustomerName(d);
+                const phone = d.phone || '—';
+                const email = d.userEmail || '—';
+                const status = d.status || 'Pending';
+                const dateStr = formatDateFull(d.createdAt);
+                const totalAmount = d.total || '$0.00';
+                const type = d.type || 'PickUp';
+                let subtotal = 0;
+                let itemsHtml = '';
+                if (d.items && d.items.length) {
+                    d.items.forEach(item => {
+                        const qty = item.quantity || 1;
+                        const price = parseFloat(item.price) || 0;
+                        const itemTotal = qty * price;
+                        subtotal += itemTotal;
+                        itemsHtml +=
+                            `<div class="invoice-item-row"><span>${qty}x ${item.name}</span><span>$${itemTotal.toFixed(2)}</span></div>`;
+                    });
+                } else {
+                    itemsHtml = '<p class="text-grayText text-sm">No items</p>';
+                }
+                const serviceCharge = subtotal * 0.10;
+                const grandTotal = subtotal + serviceCharge;
+                content.innerHTML = `
+                    <div class="grid grid-cols-2 gap-2 text-sm mb-4">
+                        <div><span class="text-grayText text-xs">Customer</span><p class="font-semibold">${customerName}</p></div>
+                        <div><span class="text-grayText text-xs">Phone</span><p class="font-semibold">${phone}</p></div>
+                        <div><span class="text-grayText text-xs">Email</span><p class="font-semibold text-sm">${email}</p></div>
+                        <div><span class="text-grayText text-xs">Status</span><p><span class="px-3 py-0.5 rounded-full text-xs border ${getStatusBadge(status)}">${status}</span></p></div>
+                        <div><span class="text-grayText text-xs">Date</span><p class="text-sm">${dateStr}</p></div>
+                        <div><span class="text-grayText text-xs">Type</span><p class="text-sm">${type}</p></div>
+                    </div>
+                    <div class="bg-slateLight/60 rounded-xl p-3">
+                        <p class="text-xs uppercase text-grayText font-semibold mb-2">ITEMS</p>
+                        ${itemsHtml}
+                        ${subtotal > 0 ? `
+                            <div class="invoice-total-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+                            <div class="invoice-service-row"><span>Service Charge (10%)</span><span>$${serviceCharge.toFixed(2)}</span></div>
+                            <div class="invoice-grand-total"><span>Total</span><span>$${grandTotal.toFixed(2)}</span></div>
+                        ` : `
+                            <div class="flex justify-between font-bold pt-2 border-t border-borderLight mt-1"><span>Total:</span><span>${totalAmount}</span></div>
+                        `}
+                    </div>
+                `;
+                const statusFlow = getStatusFlow(status);
+                let actionHtml = '';
+                if (status === 'Pending') {
+                    actionHtml +=
+                        `<button class="btn-confirm" style="flex:1;padding:0.5rem 1rem;border-radius:30px;background:#20b06b;color:white;font-weight:600;border:none;cursor:pointer;" data-action="accept"><i class="fas fa-check mr-1"></i>Accept</button>
+                                 <button class="btn-decline" style="flex:1;padding:0.5rem 1rem;border-radius:30px;background:#dc3c4c;color:white;font-weight:600;border:none;cursor:pointer;" data-action="decline"><i class="fas fa-times mr-1"></i>Decline</button>`;
+                } else {
+                    statusFlow.forEach(s => {
+                        actionHtml +=
+                            `<button class="order-action-btn" style="flex:1;padding:0.4rem 0.8rem;border-radius:30px;background:#eef2f8;border:1px solid #dce3ed;font-weight:500;cursor:pointer;" data-action="${s.toLowerCase()}">${s}</button>`;
+                    });
+                }
+                actionHtml +=
+                    `<button class="btn-invoice" style="flex:1;padding:0.5rem 1rem;border-radius:30px;background:#1a5cff;color:white;font-weight:600;border:none;cursor:pointer;" id="modalInvoiceBtn"><i class="fas fa-file-pdf mr-1"></i>Invoice</button>
+                             <button class="btn-close-popup" style="flex:1;padding:0.5rem 1rem;border-radius:30px;background:#eef2f8;color:#2e405b;font-weight:600;border:none;cursor:pointer;" id="modalCloseBtn">Close</button>`;
+                actions.innerHTML = actionHtml;
+                actions.querySelectorAll('[data-action]').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const action = this.dataset.action;
+                        const statusMap = { 'accept': 'Accepted', 'decline': 'Declined', 'preparing': 'Preparing',
+                            'ready': 'Ready', 'complete': 'Complete' };
+                        if (statusMap[action]) {
+                            updateOrderStatus(orderId, statusMap[action]);
+                            setTimeout(() => modal.classList.add('hidden'), 300);
+                        }
+                    });
+                });
+                document.getElementById('modalInvoiceBtn')?.addEventListener('click', () => generateOrderInvoice(
+                    orderId, d));
+                document.getElementById('modalCloseBtn')?.addEventListener('click', () => modal.classList.add(
+                'hidden'));
+            }).catch(() => { content.innerHTML = '<p class="text-red-500">Error loading</p>'; });
+        }
+
+        function generateOrderInvoice(orderId, data) {
+            const customerName = getCustomerName(data);
+            const phone = data.phone || '—';
+            const email = data.userEmail || '—';
+            const status = data.status || 'Pending';
+            const dateStr = formatDateFull(data.createdAt);
+            const type = data.type || 'PickUp';
+            const orderTotal = data.total || '$0.00';
+            let subtotal = 0;
+            let itemsHtml = '';
+            if (data.items && data.items.length) {
+                data.items.forEach(item => {
+                    const qty = item.quantity || 1;
+                    const price = parseFloat(item.price) || 0;
+                    const itemTotal = qty * price;
+                    subtotal += itemTotal;
+                    itemsHtml +=
+                        `<div class="invoice-item-row"><span>${qty}x ${item.name}</span><span>$${itemTotal.toFixed(2)}</span></div>`;
+                });
+            } else {
+                itemsHtml = '<p style="color:#6b7f96;font-size:13px;">No items</p>';
+            }
+            const serviceCharge = subtotal * 0.10;
+            const grandTotal = subtotal + serviceCharge;
+            const invoiceHtml = `
+                <div style="font-family:'Inter',sans-serif;max-width:600px;margin:0 auto;padding:30px;background:#fff;color:#1a1a1a;border-radius:12px;">
+                    <div style="text-align:center;border-bottom:2px solid #1a5cff;padding-bottom:15px;margin-bottom:20px;">
+                        <h2 style="color:#1a5cff;font-size:28px;margin:0;">Brick Lane · Order Invoice</h2>
+                        <p style="color:#6b7f96;font-size:14px;margin-top:4px;">Order #${orderId.slice(0,8)}</p>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;margin-bottom:16px;font-size:14px;">
+                        <div><span style="color:#6b7f96;">Customer</span> ${customerName}</div>
+                        <div><span style="color:#6b7f96;">Phone</span> ${phone}</div>
+                        <div><span style="color:#6b7f96;">Email</span> ${email}</div>
+                        <div><span style="color:#6b7f96;">Type</span> ${type}</div>
+                        <div style="grid-column:span 2;"><span style="color:#6b7f96;">Date</span> ${dateStr}</div>
+                        <div style="grid-column:span 2;"><span style="color:#6b7f96;">Status</span> ${status}</div>
+                    </div>
+                    <div style="background:#f8faff;border-radius:12px;padding:16px;margin-bottom:16px;">
+                        <p style="font-size:12px;font-weight:600;color:#6b7f96;text-transform:uppercase;margin-bottom:8px;">Items</p>
+                        ${itemsHtml}
+                        ${subtotal > 0 ? `
+                            <div class="invoice-total-row" style="display:flex;justify-content:space-between;font-weight:600;padding-top:8px;border-top:1px solid #dce3ed;margin-top:4px;"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+                            <div class="invoice-service-row" style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;color:#6b7f96;"><span>Service Charge (10%)</span><span>$${serviceCharge.toFixed(2)}</span></div>
+                            <div class="invoice-grand-total" style="display:flex;justify-content:space-between;font-weight:800;font-size:18px;padding-top:8px;border-top:2px solid #1a5cff;margin-top:4px;color:#1a5cff;"><span>Total</span><span>$${grandTotal.toFixed(2)}</span></div>
+                        ` : `
+                            <div style="display:flex;justify-content:space-between;font-weight:700;padding-top:8px;border-top:2px solid #dce3ed;margin-top:6px;"><span>Total</span><span>${orderTotal}</span></div>
+                        `}
+                    </div>
+                    <div style="text-align:center;font-size:12px;color:#6b7f96;border-top:1px solid #eef2f8;padding-top:15px;">
+                        Thank you for your order!<br>© Brick Lane - ${new Date().getFullYear()}
+                    </div>
+                </div>
+            `;
+            const container = document.createElement('div');
+            container.innerHTML = invoiceHtml;
+            document.body.appendChild(container);
+            const element = container.firstElementChild;
+            const opt = {
+                margin: 10,
+                filename: `Order_${orderId.slice(0,8)}_${new Date().toISOString().split('T')[0]}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save().then(() => {
+                showNotification('📄 Invoice Downloaded', 'Order invoice generated');
+                document.body.removeChild(container);
+            }).catch(() => { document.body.removeChild(container); });
+        }
+
+        // ================== EXPORT ORDERS CSV ==================
+        document.getElementById('exportOrdersCsv')?.addEventListener('click', function() {
+            if (!allOrders.length) { showNotification('Info', 'No orders'); return; }
+            let csv = 'Order ID,Customer,Type,Items,Total,Status,Date\n';
+            allOrders.forEach(o => {
+                const customerName = getCustomerName(o);
+                const items = o.items ? o.items.map(i => `${i.quantity||1}x${i.name}`).join('; ') : '—';
+                const date = o.createdAt ? formatDateFull(o.createdAt) : '—';
+                csv +=
+                    `"${o.id || '—'}","${customerName}","${o.type || 'PickUp'}","${items}","${o.total || '$0'}","${o.status || 'Pending'}","${date}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `orders_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showNotification('Exported', 'Orders CSV downloaded');
+        });
+
+        document.getElementById('orderTypeFilter')?.addEventListener('change', function() {
+            currentOrderFilter = this.value;
+            renderOrdersTable(allOrders);
+        });
+
+        // ================== MENU ==================
+        function loadMenu() {
+            if (menuUnsubscribe) menuUnsubscribe();
+            menuUnsubscribe = db.collection('menuItems').onSnapshot(snap => {
+                const container = document.getElementById('menuContainer');
+                document.getElementById('statMenu').textContent = snap.size;
+                const select = document.getElementById('campaignItemSelect');
+                const currentVal = select.value;
+                select.innerHTML =
+                    '<option value="">-- Choose from menu --</option><option value="custom">+ Type custom</option>';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const opt = document.createElement('option');
+                    opt.value = d.name;
+                    opt.textContent = d.name;
+                    select.appendChild(opt);
+                });
+                if (currentVal) select.value = currentVal;
+                if (snap.empty) {
+                    container.innerHTML =
+                        '<div class="col-span-full text-center py-8 text-grayText">No menu items</div>';
+                    return;
+                }
+                let html = '';
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const img = d.images && d.images[0] ||
+                        'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=300&auto=format';
+                    const discount = d.discount ?
+                        `<span class="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">${d.discount}</span>` :
+                        '';
+                    html += `
+                        <div class="menu-item-card bg-white rounded-2xl border border-borderLight overflow-hidden shadow-sm hover:shadow-md transition">
+                            <img src="${img}" class="h-40 w-full object-cover" />
+                            <div class="p-4">
+                                <div class="flex justify-between items-start">
+                                    <div><h4 class="font-semibold text-ink text-base">${d.name}</h4>${discount}</div>
+                                    <span class="font-bold text-primary text-lg">$${d.price}</span>
+                                </div>
+                                <p class="text-grayText text-sm mt-1 line-clamp-2">${d.desc || ''}</p>
+                                <div class="mt-3 flex gap-2 flex-wrap">
+                                    <button class="edit-menu-btn text-xs border border-primary/20 text-primary hover:bg-primaryLight px-3 py-1 rounded-full transition" data-id="${doc.id}"><i class="fas fa-pen mr-1"></i>Edit</button>
+                                    <button class="delete-menu-btn text-xs text-red-400 hover:text-red-600 border border-red-200 px-3 py-1 rounded-full hover:bg-red-50 transition" data-id="${doc.id}"><i class="fas fa-trash mr-1"></i>Remove</button>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                container.innerHTML = html;
+                container.querySelectorAll('.edit-menu-btn').forEach(b => {
+                    b.addEventListener('click', function() { openEditMenuModal(this.dataset.id); });
+                });
+                container.querySelectorAll('.delete-menu-btn').forEach(b => {
+                    b.addEventListener('click', function() {
+                        if (confirm('Delete this item?')) {
+                            db.collection('menuItems').doc(this.dataset.id).delete()
+                                .then(() => showNotification('Deleted', 'Menu item removed'));
+                        }
+                    });
+                });
+            }, err => {
+                console.error(err);
+                document.getElementById('menuContainer').innerHTML =
+                    '<p class="text-red-500 col-span-full">Error loading menu.</p>';
+            });
+        }
+
+        function openEditMenuModal(itemId) {
+            const modal = document.getElementById('editItemModal');
+            modal.classList.remove('hidden');
+            document.getElementById('editItemId').value = itemId;
+            db.collection('menuItems').doc(itemId).get().then(doc => {
+                if (!doc.exists) { showNotification('Error', 'Item not found');
+                    modal.classList.add('hidden'); return; }
+                const d = doc.data();
+                document.getElementById('editItemName').value = d.name || '';
+                document.getElementById('editItemPrice').value = d.price || '';
+                document.getElementById('editItemDesc').value = d.desc || '';
+                document.getElementById('editItemImage').value = (d.images && d.images[0]) || '';
+            }).catch(() => { showNotification('Error', 'Could not load');
+                modal.classList.add('hidden'); });
+        }
+
+        function closeEditMenuModal() { document.getElementById('editItemModal').classList.add('hidden'); }
+        document.getElementById('editItemModalClose').addEventListener('click', closeEditMenuModal);
+        document.getElementById('editItemCancelBtn').addEventListener('click', closeEditMenuModal);
+        document.getElementById('editItemModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeEditMenuModal();
+        });
+        document.getElementById('editItemForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editItemId').value;
+            const name = document.getElementById('editItemName').value.trim();
+            const price = document.getElementById('editItemPrice').value.trim();
+            const desc = document.getElementById('editItemDesc').value.trim();
+            const img = document.getElementById('editItemImage').value.trim();
+            if (!name || !price) { showNotification('Error', 'Name and price required'); return; }
+            db.collection('menuItems').doc(id).update({
+                name,
+                price: parseFloat(price),
+                desc: desc || 'Delicious',
+                images: img ? [img] : ['https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=300&auto=format'],
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => { showNotification('Updated', `${name} updated`);
+                closeEditMenuModal(); })
+            .catch(() => showNotification('Error', 'Failed to update'));
+        });
+
+        // ================== ADD MENU MODAL ==================
+        function setupModals() {
+            document.getElementById('addItemModalClose').addEventListener('click', () => document.getElementById('addItemModal')
+                .classList.add('hidden'));
+            document.getElementById('addItemModal').addEventListener('click', (e) => {
+                if (e.target === e.currentTarget) document.getElementById('addItemModal').classList.add('hidden');
+            });
+            document.getElementById('addItemForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('itemName').value;
+                const price = document.getElementById('itemPrice').value;
+                const desc = document.getElementById('itemDesc').value;
+                const img = document.getElementById('itemImage').value;
+                db.collection('menuItems').add({
+                    name,
+                    price: parseFloat(price),
+                    desc: desc || 'Delicious',
+                    images: img ? [img] :
+                        ['https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=300&auto=format']
+                }).then(() => {
+                    showNotification('Added', `${name} added`);
+                    document.getElementById('addItemForm').reset();
+                    document.getElementById('addItemModal').classList.add('hidden');
+                });
+            });
+            const select = document.getElementById('campaignItemSelect');
+            const customInput = document.getElementById('campaignItemCustom');
+            select.addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    customInput.classList.remove('hidden');
+                    customInput.required = true;
+                } else {
+                    customInput.classList.add('hidden');
+                    customInput.required = false;
+                    customInput.value = '';
+                }
+            });
+        }
+
+        // ================== DISCOUNTS ==================
+        function loadDiscounts() {
+            if (discountsUnsubscribe) discountsUnsubscribe();
+            discountsUnsubscribe = db.collection('discounts').orderBy('createdAt', 'desc').onSnapshot(snap => {
+                discountCampaigns = [];
+                snap.forEach(doc => { const d = doc.data();
+                    d.id = doc.id;
+                    discountCampaigns.push(d); });
+                renderDiscounts();
+                updateLiveDiscountDisplay();
+            }, err => {
+                console.error(err);
+                document.getElementById('discountTableBody').innerHTML =
+                    '<tr><td colspan="9" class="text-center py-4 text-red-500">Error loading campaigns</td></tr>';
+            });
+        }
+
+        function renderDiscounts() {
+            const tbody = document.getElementById('discountTableBody');
+            if (!discountCampaigns.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-grayText">No campaigns yet</td></tr>';
+                return;
+            }
+            const now = new Date();
+            let html = '';
+            discountCampaigns.forEach(c => {
+                const status = c.status || 'Inactive';
+                const startDate = c.startDate ? new Date(c.startDate) : null;
+                const endDate = c.endDate ? new Date(c.endDate) : null;
+                const isActive = status === 'Active';
+                const isExpired = endDate && endDate < now;
+                const isNotStarted = startDate && startDate > now;
+                let displayStatus = 'Inactive';
+                let statusClass = 'inactive';
+                if (isActive && !isExpired && !isNotStarted) { displayStatus = 'Active';
+                    statusClass = 'active'; } else if (isExpired) { displayStatus = 'Expired';
+                    statusClass = 'expired'; } else if (isNotStarted) { displayStatus = 'Scheduled';
+                    statusClass = 'inactive'; }
+                const originalPrice = c.originalPrice || 19.99;
+                const discountPercent = c.discountPercent || 0;
+                const discounted = (originalPrice * (1 - discountPercent / 100)).toFixed(2);
+                const startStr = startDate ? startDate.toLocaleString() : '—';
+                const endStr = endDate ? endDate.toLocaleString() : '—';
+                html += `
+                    <tr class="discount-campaign-row border-b border-borderLight/40 hover:bg-slateLight/30">
+                        <td class="py-2.5 font-medium">${c.name || 'Unnamed'}</td>
+                        <td class="py-2.5">${c.itemName || '—'}</td>
+                        <td class="py-2.5">$${originalPrice.toFixed(2)}</td>
+                        <td class="py-2.5 font-semibold text-primary">$${discounted}</td>
+                        <td class="py-2.5 font-semibold">${discountPercent}%</td>
+                        <td class="py-2.5 text-xs">${startStr}</td>
+                        <td class="py-2.5 text-xs">${endStr}</td>
+                        <td class="py-2.5"><span class="status-badge ${statusClass}">${displayStatus}</span></td>
+                        <td class="py-2.5">
+                            <button class="toggle-discount-btn text-xs bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded-full mr-1" data-id="${c.id}" data-action="${isActive ? 'deactivate' : 'activate'}">${isActive ? '⏸️' : '▶️'}</button>
+                            <button class="delete-discount-btn text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded-full" data-id="${c.id}"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+            });
+            tbody.innerHTML = html;
+            tbody.querySelectorAll('.toggle-discount-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const action = this.dataset.action;
+                    const newStatus = action === 'activate' ? 'Active' : 'Inactive';
+                    db.collection('discounts').doc(id).update({ status: newStatus, updatedAt: firebase
+                            .firestore.FieldValue.serverTimestamp() })
+                        .then(() => showNotification('Updated', `Campaign ${newStatus}`))
+                        .catch(err => console.error(err));
+                });
+            });
+            tbody.querySelectorAll('.delete-discount-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    if (confirm('Delete this discount campaign?')) {
+                        db.collection('discounts').doc(id).delete()
+                            .then(() => showNotification('Deleted', 'Campaign removed'))
+                            .catch(err => console.error(err));
+                    }
+                });
+            });
+        }
+
+        function updateLiveDiscountDisplay() {
+            const now = new Date();
+            let activeCampaign = null;
+            for (const c of discountCampaigns) {
+                if (c.status === 'Active' && c.startDate && c.endDate) {
+                    const start = new Date(c.startDate);
+                    const end = new Date(c.endDate);
+                    if (start <= now && end > now) { activeCampaign = c; break; }
+                }
+            }
+            if (activeCampaign) {
+                document.getElementById('liveDiscountDisplay').textContent = `${activeCampaign.discountPercent}%`;
+                const end = new Date(activeCampaign.endDate);
+                const diff = end - now;
+                if (diff > 0) {
+                    const hours = Math.floor(diff / 3600000);
+                    const mins = Math.floor((diff % 3600000) / 60000);
+                    const secs = Math.floor((diff % 60000) / 1000);
+                    document.getElementById('liveCountdownDisplay').textContent =
+                        `${String(hours).padStart(2,'0')} : ${String(mins).padStart(2,'0')} : ${String(secs).padStart(2,'0')}`;
+                } else {
+                    document.getElementById('liveCountdownDisplay').textContent = '00 : 00 : 00';
+                }
+            } else {
+                document.getElementById('liveDiscountDisplay').textContent = '0%';
+                document.getElementById('liveCountdownDisplay').textContent = '00 : 00 : 00';
+            }
+        }
+
+        if (countdownInterval) clearInterval(countdownInterval);
+        countdownInterval = setInterval(updateLiveDiscountDisplay, 1000);
+
+        document.getElementById('discountForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('campaignName').value.trim();
+            const select = document.getElementById('campaignItemSelect');
+            const customInput = document.getElementById('campaignItemCustom');
+            let itemName = select.value;
+            if (itemName === 'custom') {
+                itemName = customInput.value.trim();
+                if (!itemName) { showNotification('Error', 'Please type a custom item name'); return; }
+            } else if (!itemName) { showNotification('Error', 'Please select or type an item'); return; }
+            const discountPercent = parseFloat(document.getElementById('campaignDiscount').value);
+            const originalPrice = parseFloat(document.getElementById('campaignOriginalPrice').value);
+            const startDate = document.getElementById('campaignStart').value;
+            const endDate = document.getElementById('campaignEnd').value;
+            if (!name || isNaN(discountPercent) || isNaN(originalPrice) || !startDate || !endDate) {
+                showNotification('Error', 'Please fill all fields');
+                return;
+            }
+            db.collection('discounts').add({
+                name,
+                itemName,
+                discountPercent,
+                originalPrice,
+                startDate,
+                endDate,
+                status: 'Active',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                showNotification('Created', `Campaign "${name}" saved`);
+                document.getElementById('discountForm').reset();
+                document.getElementById('campaignItemCustom').classList.add('hidden');
+            }).catch(err => console.error(err));
+        });
+
+        document.getElementById('exportCsvBtn').addEventListener('click', function() {
+            if (!discountCampaigns.length) { showNotification('Info', 'No campaigns'); return; }
+            let csv = 'Campaign,Item,Original,Discounted,Discount %,Start,End,Status\n';
+            discountCampaigns.forEach(c => {
+                const original = c.originalPrice || 19.99;
+                const discounted = (original * (1 - (c.discountPercent || 0) / 100)).toFixed(2);
+                const status = c.status || 'Inactive';
+                const start = c.startDate || '—';
+                const end = c.endDate || '—';
+                csv +=
+                    `"${c.name || 'Unnamed'}","${c.itemName || '—'}","${original.toFixed(2)}","${discounted}","${c.discountPercent || 0}%","${start}","${end}","${status}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `discounts_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showNotification('Exported', 'CSV downloaded');
+        });
+
+        document.getElementById('importCsvBtn').addEventListener('click', function() {
+            showNotification('Import',
+                'CSV import: upload a CSV with columns: Campaign,Item,Original,Discounted,Discount %,Start,End,Status');
+        });
+
+        // ================== STATS & ANALYTICS ==================
+        function updateStats(orders) {
+            const active = orders.filter(o => o.status !== 'Complete' && o.status !== 'Declined').length;
+            document.getElementById('statOrders').textContent = active;
+            db.collection('users').get().then(snap => document.getElementById('statUsers').textContent = snap.size)
+                .catch(() => {});
+        }
+
+        function updateAnalytics(orders) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const weekAgo = new Date(today);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            let todayCount = 0,
+                weekCount = 0,
+                revenue = 0;
+            orders.forEach(o => {
+                if (o.createdAt) {
+                    const d = o.createdAt.toDate ? o.createdAt.toDate() : new Date(o.createdAt);
+                    if (d >= today) todayCount++;
+                    if (d >= weekAgo) weekCount++;
+                }
+                if (o.total) {
+                    const num = parseFloat(o.total.replace('$', ''));
+                    if (!isNaN(num)) revenue += num;
+                }
+            });
+            document.getElementById('analyticsToday').textContent = todayCount;
+            document.getElementById('analyticsWeek').textContent = weekCount;
+            document.getElementById('analyticsRevenue').textContent = `$${revenue.toFixed(2)}`;
+        }
+
+        // ================== TABS ==================
+        function setupTabs() {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    switchTab(this.dataset.tab);
+                });
+            });
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            const map = { 'live': 'tabLive', 'history': 'tabHistory', 'bookings': 'tabBookings', 'menu': 'tabMenu',
+                'discounts': 'tabDiscounts', 'analytics': 'tabAnalytics' };
+            const panel = document.getElementById(map[tab]);
+            if (panel) panel.classList.remove('hidden');
+            const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+            if (btn) btn.classList.add('active');
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            const sectionMap = { 'live': 'orders', 'history': 'history', 'bookings': 'bookings', 'menu': 'products',
+                'discounts': 'discounts', 'analytics': 'analytics' };
+            const sec = sectionMap[tab];
+            document.querySelector(`.sidebar-link[data-section="${sec}"]`)?.classList.add('active');
+            document.getElementById('sectionTitle').textContent = tab.charAt(0).toUpperCase() + tab.slice(1);
+            if (tab === 'live') loadOrders();
+            if (tab === 'bookings') loadBookings();
+            if (tab === 'discounts') loadDiscounts();
+            if (tab === 'analytics') { loadOrders(); } // refresh analytics on switch
+        }
+
+        // ================== SIDEBAR ==================
+        function setupSidebar() {
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const section = this.dataset.section;
+                    document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    if (section === 'orders') switchTab('live');
+                    else if (section === 'history') switchTab('history');
+                    else if (section === 'products') switchTab('menu');
+                    else if (section === 'stock') switchTab('menu');
+                    else if (section === 'bookings') switchTab('bookings');
+                    else if (section === 'discounts') switchTab('discounts');
+                    else if (section === 'analytics') switchTab('analytics');
+                    else if (section === 'messages') showNotification('Messages', 'Feature coming soon');
+                    else if (section === 'settings') showNotification('Settings', 'Feature coming soon');
+                    // close mobile sidebar
+                    document.getElementById('sidebar').classList.remove('open');
+                    document.getElementById('mobileOverlay').classList.remove('active');
+                });
+            });
+        }
+
+        // ================== MOBILE TOGGLE ==================
+        function setupMobileToggle() {
+            const toggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+            toggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('active');
+            });
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            });
+            // close on escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('active');
+                }
+            });
+        }
+
+        // ================== CLOSE MODALS ==================
+        document.getElementById('modalClose').addEventListener('click', () => document.getElementById('orderModal').classList
+            .add('hidden'));
+        document.getElementById('orderModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) document.getElementById('orderModal').classList.add('hidden');
+        });
+        document.getElementById('bookingPopupClose').addEventListener('click', () => document.getElementById('bookingPopup')
+            .classList.remove('active'));
+        document.getElementById('bookingPopup').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) document.getElementById('bookingPopup').classList.remove('active');
+        });
+
+        // ================== INIT ==================
+        function initAdmin() {
+            if (window._adminInit) return;
+            window._adminInit = true;
+            seedMenu();
+            loadOrders();
+            loadBookings();
+            loadMenu();
+            loadDiscounts();
+            setupTabs();
+            setupModals();
+            setupSidebar();
+            setupMobileToggle();
+            switchTab('live');
+            document.getElementById('refreshOrdersBtn').addEventListener('click', () => { loadOrders();
+                showNotification('Refreshed', 'Orders updated'); });
+            document.getElementById('refreshBookingsBtn').addEventListener('click', () => { loadBookings();
+                showNotification('Refreshed', 'Bookings updated'); });
+            document.getElementById('addItemQuick').addEventListener('click', () => document.getElementById('addItemModal')
+                .classList.remove('hidden'));
+            document.getElementById('addMenuItemBtn').addEventListener('click', () => document.getElementById('addItemModal')
+                .classList.remove('hidden'));
+            document.querySelectorAll('#logoutBtnSidebar, #logoutBtnTop').forEach(el => {
+                el.addEventListener('click', () => {
+                    if (auth.currentUser) auth.signOut();
+                    isAuthenticated = false;
+                    window._adminInit = false;
+                    loginOverlay.classList.remove('hidden');
+                    loginPassword.value = '';
+                    loginError.textContent = '';
+                    if (ordersUnsubscribe) ordersUnsubscribe();
+                    if (bookingsUnsubscribe) bookingsUnsubscribe();
+                    if (menuUnsubscribe) menuUnsubscribe();
+                    if (discountsUnsubscribe) discountsUnsubscribe();
+                    if (countdownInterval) clearInterval(countdownInterval);
+                    document.getElementById('sidebar').classList.remove('open');
+                    document.getElementById('mobileOverlay').classList.remove('active');
+                });
+            });
+        }
+
+        console.log('Brick Lane Admin · Password protected');
+        console.log('✨ Mobile responsive: sidebar toggle, stats, tables');
+        console.log('📊 Analytics tab added with today/week/revenue');
+        console.log('🔐 Login password: 0630');
+    </script>
+</body>
+</html>
